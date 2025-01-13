@@ -10,7 +10,7 @@ Table 同士の親と子の関係は以下の通り
 ```mermaid
 erDiagram
     Item ||--o{ Rent : "Id<->ItemId"
-    Item |o--|| Label : "VisibleId<->Id"
+    Item |o--|| Label : "VisibleId<->VisibleId"
     Item {
         i32 Id PK "物品ID autoincrement"
         String VisibleId FK "Label tableのIdとリレーションを張っている"
@@ -19,7 +19,7 @@ erDiagram
         String ProductNumber "空の文字列を許容 型番"
         String ImageURL UK "cloudflare R2に保存されている画像URL e.g. https://~/Id.webp"
         String Description "空の文字列を許容 物品の説明"
-        Option_i32 PurchaseYear "購入年度"
+        Option_dayetime PurchaseYear "購入年度"
         Option_i32 PurchasePrice "購入金額"
         Option_i32 Durability "耐用年数"
         boolean IsDepreciation "減価償却対象かどうか"
@@ -30,7 +30,7 @@ erDiagram
         datetime UpdatedAt "更新日時"
     }
     Label {
-        String Id PK "36進数のautoincrement"
+        String VisibleId PK "36進数のautoincrement"
         String Record "ActiveEnum {Qr, Barcode, Nothing}"
     }
     Rent {
