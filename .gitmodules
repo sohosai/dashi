@@ -1,3 +1,6 @@
 [submodule "backend/server"]
 	path = backend/server
 	url = https://github.com/Myxogastria0808/dashi-server.git
+[submodule "client"]
+	path = client
+	url = https://github.com/Myxogastria0808/dashi-client.git
