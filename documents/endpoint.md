@@ -20,7 +20,7 @@ header {Authorization}
 body {}
 ```
 
-# /healthcheck (GET)
+# /utils/healthcheck (GET)
 
 RDB、GraphDB、Meilisearch のコンテナが稼動しているかのチェック
 
