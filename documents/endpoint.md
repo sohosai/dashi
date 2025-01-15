@@ -1,4 +1,4 @@
-# /utils/login (GET)
+# /api/utils/login (GET)
 
 Auth0 の認証 (一旦、basic 認証)
 
@@ -20,7 +20,7 @@ header {Authorization}
 body {}
 ```
 
-# /utils/healthcheck (GET)
+# /api/utils/healthcheck (GET)
 
 RDB、GraphDB、Meilisearch のコンテナが稼動しているかのチェック
 
@@ -51,7 +51,7 @@ header {}
 body {}
 ```
 
-# /item/search?keywords={keyword} (GET)
+# /api/item/search?keywords={keyword} (GET)
 
 keyword に引っかかる検索結果を取得
 
@@ -98,7 +98,7 @@ body {
 }
 ```
 
-# /item/{VisibleId} (GET)
+# /api/item/{VisibleId} (GET)
 
 ItemId で指定した物品の情報を取得 (一つだけのはず)
 
@@ -158,7 +158,7 @@ body {
 }
 ```
 
-# /item/connector/{ConnecrtorName} (GET)
+# /api/item/connector/{ConnecrtorName} (GET)
 
 コネクタで絞り込み検索された対象の全物品の情報を返す
 
@@ -205,7 +205,7 @@ body {
 }
 ```
 
-# /item/cable (GET)
+# /api/item/cable (GET)
 
 ケーブルの色で検索された物品を返す (一つだけのはず)
 
@@ -255,7 +255,7 @@ body {
 }
 ```
 
-# /item/register (POST)
+# /api/item/register (POST)
 
 物品の登録をする
 
@@ -336,7 +336,7 @@ header {Authorization}
 body {}
 ```
 
-# /item/update (PUT)
+# /api/item/update (PUT)
 
 物品情報の更新をする
 
@@ -444,7 +444,7 @@ header {Authorization}
 body {}
 ```
 
-# /item/delete/{VisibleId} (DELETE)
+# /api/item/delete/{VisibleId} (DELETE)
 
 物品の削除をする
 
@@ -489,7 +489,7 @@ header {Authorization}
 body {}
 ```
 
-# /rent/rent (POST)
+# /api/rent/rent (POST)
 
 物品の貸し出しをする
 
@@ -534,7 +534,7 @@ header {Authorization}
 body {}
 ```
 
-# /rent/return/{VisibleId} (PUT)
+# /api/rent/return/{VisibleId} (PUT)
 
 物品の返却をする
 
@@ -567,7 +567,7 @@ header {Authorization}
 body {}
 ```
 
-# /generate/qr (POST)
+# /api/generate/qr (POST)
 
 ## 外部接続
 
@@ -597,7 +597,7 @@ body {
 }
 ```
 
-# /generate/barcode (POST)
+# /api/generate/barcode (POST)
 
 Label Table に barcode として使用する物品 ID を追加する
 
@@ -627,7 +627,7 @@ body {
 }
 ```
 
-# /csv/depreiation (GET)
+# /api/csv/depreiation (GET)
 
 減価償却の csv データを返す。
 
@@ -670,7 +670,7 @@ body {
 }
 ```
 
-# /csv/item (GET)
+# /api/csv/item (GET)
 
 物品リストの csv データを返す。
 
