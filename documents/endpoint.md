@@ -534,7 +534,7 @@ header {Authorization}
 body {}
 ```
 
-# /rent/return/{ItemId} (PUT)
+# /rent/return/{VisibleId} (PUT)
 
 物品の返却をする
 
