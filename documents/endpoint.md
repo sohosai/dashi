@@ -1,4 +1,4 @@
-# /login (GET)
+# /utils/login (GET)
 
 Auth0 の認証 (一旦、basic 認証)
 
@@ -51,7 +51,7 @@ header {}
 body {}
 ```
 
-# /Item/search?keywords={keyword} (GET)
+# /item/search?keywords={keyword} (GET)
 
 keyword に引っかかる検索結果を取得
 
