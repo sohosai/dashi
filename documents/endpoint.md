@@ -32,10 +32,9 @@ RDB、GraphDB、Meilisearch のコンテナが稼動しているかのチェッ�
 
 ## 処理RegisterItemData
 
-1. RDB の healthcheck
-2. GraphDB の healthcheck
-3. Meilisearch の healthcheckRegisterItemData
-4. 200を返す (200)
+1. healthcheck
+2. Meilisearch の healthcheckRegisterItemData
+3. 200を返す (200)
 
 ## Request
 
@@ -61,7 +60,7 @@ keyword に引っかかる検索結果を取得
 
 ## 処理
 
-1. Meilisearch の healthcheck
+1. healthcheck
 2. `keyword`を検索 (Meilisearch)
 
 ※ 複数`keyword`の場合は、`+`で結合されて来るのでスペースに変換して Meilisearch に突っこむ
@@ -109,13 +108,12 @@ ItemId で指定した物品の情報を取得 (一つだけのはず)
 
 ## 処理
 
-1. RDB の healthcheck
-2. GraphDBのhealthcheck
-3. `VisibleId`から Item Table を検索 (RDB) <- このとき、`IsWaste`が`false`であることが条件
-4. 2.が成功したら、`VisibleId`から Label Table を検索 (RDB)
-5. `Id`(Item Table)で親物品を検索 (GraphDB) <- 親物品の`Id`を取得
-6. `Id` (Item Table)から親物品の`VisibleId`を取得
-7. EachItemData 型 を返す (200)
+1. healthcheck
+2. `VisibleId`から Item Table を検索 (RDB) <- このとき、`IsWaste`が`false`であることが条件
+3. 2.が成功したら、`VisibleId`から Label Table を検索 (RDB)
+4. `Id`(Item Table)で親物品を検索 (GraphDB) <- 親物品の`Id`を取得
+5. `Id` (Item Table)から親物品の`VisibleId`を取得
+6. EachItemData 型 を返す (200)
 
 ## Request
 
@@ -168,7 +166,7 @@ body {
 
 ## 処理
 
-1. Meilisearch の healthcheck
+1. healthcheck
 2. filter で`Connector`を検索 (Meilisearch)
 
 ※ 検索前に文字列の両端に""をつける処理を書くこと
@@ -215,7 +213,7 @@ body {
 
 ## 処理
 
-1. RDB の healthcheck
+1. healthcheck
 2. `Color`をItem Tableで検索 (RDB) <- このとき`IsWaste`が`false`であることが条件
 
 ※ 検索前に色の単語同士を`^`で結合する処理を書くこと
@@ -268,22 +266,20 @@ body {
 
 ## 処理
 
-1. RDB の healthcheck
-2. GraphDB の healthcheck
-3. MeiliSearch の healthcheck
-4. validation の実行
+1. healthcheck
+2. validation の実行
    1. 登録される物品が新規の物品であるかをチェック (RDB, Meiliserach) <-RDBのチェックでは、`IsWaste`が`false`であることが条件
       1. RDBまたは、Meilisearchのどちらかにのみ登録データが残っていたら、エラーを返す <-重大なエラー
    2. 親物品が存在するかのチェック (RDB, GraphDB, Meilisearch) <- このとき`IsWaste`が`false`であることが条件
    3. VisibleId が Label Table に存在するかのチェック (RDB)
    4. 物品名が空でないかのチェック
-5. VisileId で Label Table を検索 (RDB) <- 4-2.で拾う
-6. Meilisearch に物品の登録する
-7. RDB に物品の登録をする
+3. VisileId で Label Table を検索 (RDB) <- 4-2.で拾う
+4. Meilisearch に物品の登録する
+5. RDB に物品の登録をする
    1. 登録に失敗したら、Meilisearch の情報を消して返す (500)
-8. GraphDB に物品のノードを追加
+6. GraphDB に物品のノードを追加
    1. 登録に失敗したら、MEilisearch と RDB の情報を消して返す (500)
-9. 200を返す (200)
+7. 200を返す (200)
 
 ## image-server の処理
 
@@ -349,10 +345,8 @@ body {}
 
 ## 処理
 
-1. RDB の healthcheck
-2. GraphDB の healthcheck
-3. Meilisearch の healthcheck
-4. validation の実行
+1. healthcheck
+2. validation の実行
 
    1. VisibleId が Item Table に存在するかチェック (RDB) <- このとき`IsWaste`が`false`であることが条件
    2. 物品名が空でないかのチェック
@@ -363,22 +357,22 @@ body {}
       1. 更新対象の物品が葉のとき
          1. skip
 
-5. Meilisearch の登録情報の更新
+3. Meilisearch の登録情報の更新
    1. 更新対象の物品の変更が親物品のみの場合
       1. skip
    1. 更新対象の物品の変更が親物品以外もある場合
       1. Meilisearch の更新処理
-6. RDB の登録情報の更新
+4. RDB の登録情報の更新
    1. 更新対象の物品の変更が親物品のみの場合
       1. skip
    1. 更新対象の物品の変更が親物品以外もある場合
       1. Meilisearch の更新処理
-7. GraphDB の登録情報の更新
+5. GraphDB の登録情報の更新
    1. 更新対象の物品の変更が親物品のみの場合
       1. 親物品の変更処理
    1. 更新対象の物品の変更が親物品以外もある場合
       1. skip
-8. 200を返す (200)
+6. 200を返す (200)
 
 ## GraphDB での処理
 
@@ -458,22 +452,20 @@ body {}
 
 ## 処理
 
-1. RDBのhealthcheck
-2. GraphDBのhealthcheck
-3. Meilisearchのhealthcheck
-4. `VisibleId`を検索 (RDB) <- このとき、`Id`を保持しておく (重要)。このとき`IsWaste`が`false`であることが条件
-5. RDBのItem Tableから削除
-6. `VisibleId`を検索 (Meilisearch)
-7. Meilisearchから削除
-8. `Id`を検索 (GraphDB)
-9. GraphDBから削除
+1. healthcheck
+2. `VisibleId`を検索 (RDB) <- このとき、`Id`を保持しておく (重要)。このとき`IsWaste`が`false`であることが条件
+3. RDBのItem Tableから削除
+4. `VisibleId`を検索 (Meilisearch)
+5. Meilisearchから削除
+6. `Id`を検索 (GraphDB)
+7. GraphDBから削除
    1. 削除対象が葉の場合
       1. 削除対象のノードを削除
    1. 削除対象が葉でない場合
       1. 削除対象のノードの子要素を検索
       2. 削除対象のノードを削除 <-2と3は同時にしたい
       3. 削除対象のノードの子要素を削除対象のノードの親要素に結合
-10. 200を返す (200)
+8. 200を返す (200)
 
 ## Request
 
@@ -499,7 +491,7 @@ body {}
 
 ## 処理
 
-1. RDBのhealthcheck
+1. healthcheck
 2. validationの実行
    1. 貸し出しの物品が存在するかチェック <-このとき、Item Tableを検索するが、`IsWaste`が`false`が条件
 3. `ItemId` (Item TableのId)を検索して、Item TableのIdを取得
@@ -544,7 +536,7 @@ body {}
 
 ## 処理
 
-1. RDBのhealthcheck
+1. healthcheck
 2. validationの実行
    1. `VisibleId`をItem Tableで検索 <- ここで、`Id`を取得。このとき、`IsWaste`が`false`が条件
       1. `IsRent`が`false`なら、500で返す
@@ -577,7 +569,7 @@ Label Table に QR として使用する物品 ID を追加する
 
 ## 処理
 
-1. RDBのhealthcheck
+1. healthcheck
 2. Label Tableに`Record`を`QR`指定し、n個生成
 3. `Id`(Label Table)の配列を返す
 
@@ -607,7 +599,7 @@ Label Table に barcode として使用する物品 ID を追加する
 
 ## 処理
 
-1. RDBのhealthcheck
+1. healthcheck
 2. Label Tableに`Record`を`Barcode`に指定し、n個生成
 3. `Id`(Label Table)の配列を返す
 
@@ -637,7 +629,7 @@ body {
 
 ## 処理
 
-1. RDBのhealthcheck
+1. healthcheck
 2. Item Tableの`IsDepreciation`の物品を検索 <-このとき、`IsWaste`が`false`であることが条件
 3. `DepreiationCsvData`の配列を返す
 
@@ -680,7 +672,7 @@ body {
 
 ## 処理
 
-1. RDBのhealthcheck
+1. healthcheck
 2. Item Tableの`IsWaste`が`false`の物品を検索
 3. `ItemCsvData`の配列を返す
 
