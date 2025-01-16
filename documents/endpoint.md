@@ -126,7 +126,7 @@ body {}
 
 ```mermaid
 erDiagram
-    EachItemData {
+    IndivisualData {
         i32 Id PK "物品ID autoincrement"
         String VisibleId FK "物品に貼るID (Label Table)"
         String ParentVisibleId "親物品に貼るID (Label Table)"
@@ -481,7 +481,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/rent/rent (POST)
+# /api/rental/rent (POST)
 
 物品の貸し出しをする
 
@@ -526,7 +526,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/rent/render/{VisibleId} (PUT)
+# /api/rental/render/{VisibleId} (PUT)
 
 物品の返却をする
 
