@@ -17,7 +17,6 @@ erDiagram
         boolean IsWaste "廃棄物かどうか"
         String Name "物品名"
         String ProductNumber "空の文字列を許容 型番"
-        String ImageURL UK "cloudflare R2に保存されている画像URL e.g. https://~/Id.webp"
         String Description "空の文字列を許容 物品の説明"
         Option_dayetime PurchaseYear "購入年度"
         Option_i32 PurchasePrice "購入金額"
@@ -30,7 +29,8 @@ erDiagram
         datetime UpdatedAt "更新日時"
     }
     Label {
-        String VisibleId PK "36進数のautoincrement"
+        i32 Id PK "autoincrement"
+        String VisibleId FK, UK "36進数のautoincrement"
         String Record "ActiveEnum {Qr, Barcode, Nothing}"
     }
     Rent {

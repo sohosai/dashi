@@ -199,7 +199,7 @@ erDiagram
 ```
 header {Authorization}
 body {
-  MeilisearchItemData[]
+    SearchItemData[]
 }
 ```
 
@@ -249,7 +249,7 @@ erDiagram
 ```
 header {Authorization}
 body {
-    MeilisearchItemData[]
+    SearchItemData[]
 }
 ```
 
