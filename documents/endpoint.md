@@ -526,7 +526,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/rent/return/{VisibleId} (PUT)
+# /api/rent/render/{VisibleId} (PUT)
 
 物品の返却をする
 
