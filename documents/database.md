@@ -33,7 +33,7 @@ erDiagram
         String VisibleId FK, UK "36進数のautoincrement"
         String Record "ActiveEnum {Qr, Barcode, Nothing}"
     }
-    Rent {
+    Rental {
         i32 Id PK "autoincrement"
         i32 ItemId FK "Item TableのIdとリレーションを張っている"
         String Recipient "貸出先"
