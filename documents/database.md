@@ -9,7 +9,7 @@ Table 同士の親と子の関係は以下の通り
 
 ```mermaid
 erDiagram
-    Item ||--o{ Rent : "Id<->ItemId"
+    Item ||--o{ Rental : "Id<->ItemId"
     Item |o--|| Label : "VisibleId<->VisibleId"
     Item {
         i32 Id PK "物品ID autoincrement"
