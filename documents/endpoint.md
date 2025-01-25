@@ -203,7 +203,7 @@ body {
 }
 ```
 
-# /api/item/cable (GET)
+# /api/item/cable/{CableColorPattern (e.g. 'Red^Orange^Brown')} (GET)
 
 ケーブルの色で検索された物品を返す (一つだけのはず)
 
@@ -224,11 +224,7 @@ body {
 
 ```
 header {Authorization}
-body {
-    {
-        Color: string (e.g. 'Red^Orange^Brown')
-    }
-}
+body {}
 ```
 
 ## Response Type
