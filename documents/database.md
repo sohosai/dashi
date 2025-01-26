@@ -29,8 +29,8 @@ erDiagram
         datetime UpdatedAt "更新日時"
     }
     Label {
-        i32 Id PK "autoincrement"
-        String VisibleId FK, UK "36進数のautoincrement"
+        String VisibleId PK, FK "36進数のincrement"
+        boolean IsMax "最新(最大)の記録のみtrue, それ以外はfalse"
         String Record "ActiveEnum {Qr, Barcode, Nothing}"
     }
     Rental {

@@ -555,7 +555,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/generate/qr (POST)
+# /api/generate/qr/{Number} (POST)
 
 ## 外部接続
 
@@ -585,7 +585,7 @@ body {
 }
 ```
 
-# /api/generate/barcode (POST)
+# /api/generate/barcode/{Number} (POST)
 
 Label Table に barcode として使用する物品 ID を追加する
 
