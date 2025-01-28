@@ -50,7 +50,7 @@ header {}
 body {}
 ```
 
-# /api/item/search?keywords={keyword} (GET)
+# /api/item/search?keywords={keywords} (GET)
 
 keyword に引っかかる検索結果を取得
 
@@ -61,9 +61,14 @@ keyword に引っかかる検索結果を取得
 ## 処理
 
 1. healthcheck
-2. `keyword`を検索 (Meilisearch)
+2. `keywords`を検索 (Meilisearch)
 
-※ 複数`keyword`の場合は、`+`で結合されて来るのでスペースに変換して Meilisearch に突っこむ
+※ 複数`keywords`の場合は、`+`で結合されて来るのでスペースに変換して Meilisearch に突っこむ
+
+参考サイト: https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results
+
+※ 必ず`IsWaste`が`false`でフィルタリング`
+
 参考サイト: https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results
 
 3. SearchItemData 型の配列 を返す (200)
@@ -156,9 +161,9 @@ body {
 }
 ```
 
-# /api/item/connector/{ConnecrtorName} (GET)
+# /api/item/connector/{ConnecrtorName}/search?keywords={keywords} (GET)
 
-コネクタで絞り込み検索された対象の全物品の情報を返す
+コネクタで絞り込み検索された対象の検索対象の物品の情報を返す
 
 ## 外部接続
 
@@ -167,10 +172,21 @@ body {
 ## 処理
 
 1. healthcheck
-2. filter で`Connector`を検索 (Meilisearch)
+2. `Connector`の絞り込みをした状態で、`keywords`検索 (Meilisearch)
 
-※ 検索前に文字列の両端に""をつける処理を書くこと
+※ 複数`keywords`の場合は、`+`で結合されて来るのでスペースに変換して Meilisearch に突っこむ
+
 参考サイト: https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results
+
+※ `connector``でフィルタリング
+
+参考サイト: https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results
+
+
+※ 必ず`IsWaste`が`false`でフィルタリング`
+
+参考サイト: https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results
+
 
 3. SearchItemData 型の配列を返す (200)
 
@@ -264,17 +280,21 @@ body {
 
 1. healthcheck
 2. validation の実行
-   1. 登録される物品が新規の物品であるかをチェック (RDB, Meiliserach) <-RDBのチェックでは、`IsWaste`が`false`であることが条件
-      1. RDBまたは、Meilisearchのどちらかにのみ登録データが残っていたら、エラーを返す <-重大なエラー
-   2. 親物品が存在するかのチェック (RDB, GraphDB, Meilisearch) <- このとき`IsWaste`が`false`であることが条件
-   3. VisibleId が Label Table に存在するかのチェック (RDB)
-   4. 物品名が空でないかのチェック
-3. VisileId で Label Table を検索 (RDB) <- 4-2.で拾う
-4. Meilisearch に物品の登録する
+   1. 物品名が空でないかのチェック (Json)
+   2. VisibleId が Label Table に存在するかのチェック (RDB)
+   3. 登録される物品が新規の物品であるかをチェック (RDB, Meiliserach) <- VisibleIdの被りがないかのチェックをする Item Tableを検索
+      1. RDBまたは、Meilisearchのどちらかにのみ登録データが存在したら、エラーを返す <-重大なエラー
+   4. 親物品が存在するかのチェック (RDB, GraphDB, Meilisearch) <- このとき`IsWaste`が`false`であることが条件
+   5. Colorが空ではない場合は、被りがないかチェック (RDB, Meiliserach)
+3. VisileId で Label Table を検索 (RDB) <- 2.1. で完了している
+
+(ここでQr or Barcodeの情報を拾う)
+
 5. RDB に物品の登録をする
-   1. 登録に失敗したら、Meilisearch の情報を消して返す (500)
+4. Meilisearch に物品の登録する
+   1. 登録に失敗したら、RDB の情報を消して返す (500)
 6. GraphDB に物品のノードを追加
-   1. 登録に失敗したら、MEilisearch と RDB の情報を消して返す (500)
+   1. 登録に失敗したら、Meilisearch と RDB の情報を消して返す (500)
 7. 200を返す (200)
 
 ## image-server の処理
@@ -298,17 +318,17 @@ flowchart LR
 ```mermaid
 erDiagram
     RegisterItemData {
-        String ParentVisibleId "GraphDBで必要"
-        String VisibleId FK "Label tableのIdとリレーションを張っている"
+        String ParentVisibleId "GraphDBで必要 (validation)"
+        String VisibleId FK "Label tableのIdとリレーションを張っている (validation)"
         String Name "物品名"
         String ProductNumber "空の文字列を許容 型番"
         String Description "空の文字列を許容 物品の説明"
         Option_i32 PurchaseYear "購入年度"
         Option_i32 PurchasePrice "購入金額"
         Option_i32 Durability "耐用年数"
-        boolean IsDepreciation "減価償却対象かどうか"
+        boolean IsDepreciation "減価償却対象かどうか (validation)"
         Json Connector "端子 e.g. ['USB Type-A', 'HDMI'] (可変な配列)"
-        String Color "空の文字列を許容 e.g. 'Red^Orange^Brown'"
+        String Color "空の文字列を許容 e.g. 'Red^Orange^Brown' (option_validation)"
     }
 ```
 
@@ -450,9 +470,9 @@ body {}
 
 1. healthcheck
 2. `VisibleId`を検索 (RDB) <- このとき、`Id`を保持しておく (重要)。このとき`IsWaste`が`false`であることが条件
-3. RDBのItem Tableから削除
+3. RDBのItem Tableの`IsWaste`を`true`に変える
 4. `VisibleId`を検索 (Meilisearch)
-5. Meilisearchから削除
+5. Meilisearchを更新 (`IsWaste`を`true`に変える)
 6. `Id`を検索 (GraphDB)
 7. GraphDBから削除
    1. 削除対象が葉の場合
@@ -597,6 +617,36 @@ Label Table に barcode として使用する物品 ID を追加する
 
 1. healthcheck
 2. Label Tableに`Record`を`Barcode`に指定し、n個生成
+3. `Id`(Label Table)の配列を返す
+
+## Request
+
+```
+header {Authorization}
+body {}
+```
+
+## Response
+
+```
+header {Authorization}
+body {
+  Label TableのId[]
+}
+```
+
+# /api/generate/nothing/{Number} (POST)
+
+## 外部接続
+
+- RDB
+
+Label Table に 何も▼貼らずに使用する物品 ID を追加する
+
+## 処理
+
+1. healthcheck
+2. Label Tableに`Record`を`Nothing`指定し、n個生成
 3. `Id`(Label Table)の配列を返す
 
 ## Request
