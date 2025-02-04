@@ -10,11 +10,28 @@ Table 同士の親と子の関係は以下の通り
 ```mermaid
 erDiagram
     Item ||--o{ Rental : "Id<->ItemId"
+    Trash |o--|{ Label : "VisibleId<->VisibleId"
     Item |o--|| Label : "VisibleId<->VisibleId"
     Item {
         i32 Id PK "物品ID autoincrement"
         String VisibleId FK "Label tableのIdとリレーションを張っている"
-        boolean IsWaste "廃棄物かどうか"
+        String Name "物品名"
+        String ProductNumber "空の文字列を許容 型番"
+        String Description "空の文字列を許容 物品の説明"
+        Option_dayetime PurchaseYear "購入年度"
+        Option_i32 PurchasePrice "購入金額"
+        Option_i32 Durability "耐用年数"
+        boolean IsDepreciation "減価償却対象かどうか"
+        Json Connector "端子 e.g. ['USB Type-A', 'HDMI'] (可変な配列)"
+        boolean IsRent "貸出中かどうか"
+        String Color "空の文字列を許容 e.g. 'Red^Orange^Brown'"
+        datetime CreatedAt "作成日時"
+        datetime UpdatedAt "更新日時"
+    }
+    Trash {
+        i32 Id PK "履歴ID autoincrement"
+        i32 ItemId PK "物品ID"
+        String VisibleId FK "Label tableのIdとリレーションを張っている"
         String Name "物品名"
         String ProductNumber "空の文字列を許容 型番"
         String Description "空の文字列を許容 物品の説明"
@@ -66,7 +83,6 @@ erDiagram
         i32 Id PK "物品ID autoincrement"
         String VisibleId FK "物品に貼るID (Label Table)"
         String Record "ActiveEnum {Qr, Barcode, Nothing} (Label Table)"
-        boolean IsWaste "廃棄物かどうか"
         String Name "物品名"
         String ProductNumber "空の文字列を許容 型番"
         String Description "空の文字列を許容 物品の説明"

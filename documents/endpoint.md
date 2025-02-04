@@ -234,7 +234,7 @@ body {
 
 ※ 検索前に色の単語同士を`^`で結合する処理を書くこと
 
-3. SearchItemData 型 を返す (200)
+3. SearchItemData 型 の配列を返す (200)
 
 ## Request
 
@@ -262,6 +262,60 @@ erDiagram
 header {Authorization}
 body {
     SearchItemData[]
+}
+```
+
+# /api/item/delete-history/:limit (GET)
+
+削除履歴を返す
+
+## 外部接続
+
+- RDB
+
+## 処理
+
+1. healthcheck
+2. limitの範囲で新しい情報から全取得する
+3. TrashItemData 型 の配列を返す (200)
+
+## Request
+
+```
+header {Authorization}
+body {}
+```
+
+
+## Response Type
+
+```mermaid
+erDiagram
+    TrashItemData {
+        i32 Id PK "履歴ID autoincrement"
+        i32 ItemId PK "物品ID"
+        String VisibleId FK "Label tableのIdとリレーションを張っている"
+        String Name "物品名"
+        String ProductNumber "空の文字列を許容 型番"
+        String Description "空の文字列を許容 物品の説明"
+        Option_dayetime PurchaseYear "購入年度"
+        Option_i32 PurchasePrice "購入金額"
+        Option_i32 Durability "耐用年数"
+        boolean IsDepreciation "減価償却対象かどうか"
+        Json Connector "端子 e.g. ['USB Type-A', 'HDMI'] (可変な配列)"
+        boolean IsRent "貸出中かどうか"
+        String Color "空の文字列を許容 e.g. 'Red^Orange^Brown'"
+        datetime CreatedAt "作成日時"
+        datetime UpdatedAt "更新日時"
+    }
+```
+
+## Response
+
+```
+header {Authorization}
+body {
+    TrashItemData[]
 }
 ```
 
@@ -355,7 +409,6 @@ body {}
 ## 外部接続
 
 - RDB
-- GraphDB (Optional)
 - Meilisearch
 - Cloudflare R2 (Optional)
 
@@ -363,67 +416,19 @@ body {}
 
 1. healthcheck
 2. validation の実行
-
-   1. VisibleId が Item Table に存在するかチェック (RDB) <- このとき`IsWaste`が`false`であることが条件
+   1. VisibleId が Item Table に存在するかチェック (RDB)
    2. 物品名が空でないかのチェック
    3. VisibleId が Label Table に存在するかのチェック (RDB)
-   4. 親物品が存在するかのチェック (RDB, GraphDB, Meilisearch) <-この時、親物品が変わっているかどうかも見る。このとき`IsWaste`が`false`であることが条件
-      1. 更新対象の物品が葉ではないとき
-         1. 親物品が変わっている場合、親物品が更新対象の物品の子孫でないことをチェック
-      1. 更新対象の物品が葉のとき
-         1. skip
-
 3. Meilisearch の登録情報の更新
-   1. 更新対象の物品の変更が親物品のみの場合
-      1. skip
-   1. 更新対象の物品の変更が親物品以外もある場合
-      1. Meilisearch の更新処理
-4. RDB の登録情報の更新
-   1. 更新対象の物品の変更が親物品のみの場合
-      1. skip
-   1. 更新対象の物品の変更が親物品以外もある場合
-      1. Meilisearch の更新処理
-5. GraphDB の登録情報の更新
-   1. 更新対象の物品の変更が親物品のみの場合
-      1. 親物品の変更処理
-   1. 更新対象の物品の変更が親物品以外もある場合
-      1. skip
-6. 200を返す (200)
-
-## GraphDB での処理
-
-登録した物品は、必ず葉になる
-
-最初の状態が以下のとき
-
-```mermaid
-flowchart LR
-    id6((Child Item)) --ItemTree--> id3((Updated Item))
-    id5((Child Item)) --ItemTree--> id3((Updated Item))
-    id3((Updated Item)) --ItemTree--> id2((Old Parent Item))
-    id2((Old Parent Item)) --ItemTree--> id1((Item))
-    id4((New Parent Item)) --ItemTree--> id1((Item))
-```
-
-更新処理後
-
-```mermaid
-flowchart LR
-    id6((Child Item)) --ItemTree--> id3((Updated Item))
-    id5((Child Item)) --ItemTree--> id3((Updated Item))
-    id3((Updated Item)) --ItemTree--> id4((Old Parent Item))
-    id2((Old Parent Item)) --ItemTree--> id1((Item))
-    id4((New Parent Item)) --ItemTree--> id1((Item))
-```
+4. GraphDB の登録情報の更新 <- `updated_at`の更新を忘れない (`created_at`は、固定)
+   1. 更新に失敗したら、MeiliSearch の情報を戻して返す (500)
+5. 200を返す (200)
 
 ## RequestType
-
-RegisterItemDataと同様の型だが、拡張性の担保のため、別の型として扱う
 
 ```mermaid
 erDiagram
     UpdateItemData {
-        String ParentVisibleId "GraphDBで必要"
         String VisibleId FK "Label tableのIdとリレーションを張っている"
         String Name "物品名"
         String ProductNumber "空の文字列を許容 型番"
@@ -469,25 +474,79 @@ body {}
 ## 処理
 
 1. healthcheck
-2. `VisibleId`を検索 (RDB) <- このとき、`Id`を保持しておく (重要)。このとき`IsWaste`が`false`であることが条件
-3. RDBのItem Tableの`IsWaste`を`true`に変える
-4. `VisibleId`を検索 (Meilisearch)
-5. Meilisearchを更新 (`IsWaste`を`true`に変える)
-6. `Id`を検索 (GraphDB)
-7. GraphDBから削除
-   1. 削除対象が葉の場合
-      1. 削除対象のノードを削除
-   1. 削除対象が葉でない場合
-      1. 削除対象のノードの子要素を検索
-      2. 削除対象のノードを削除 <-2と3は同時にしたい
-      3. 削除対象のノードの子要素を削除対象のノードの親要素に結合
-8. 200を返す (200)
+2. `VisibleId`を検索し、対象の物品が存在することをチェック (RDB, Meilisearch) <- このとき、`Item Table` (RDB) 及び`Item` (Meilisearch) を保持しておく。
+        1. `Id`が1の場合は、除外する
+        2. RDBまたは、Meilisearchのどちらかにのみ登録データが存在したら、エラーを返す <-重大なエラー
+3. GraphDBから削除できるかのチェック
+    1. 削除対象が葉でない場合
+        1. エラーを吐く (400 or 500)
+4. `Id`を検索 (GraphDB)
+5. 貸し出し中物品でないかチェック
+    1. 貸し出し中だと削除できない (400)
+6. Meilisearchを対象物品を削除
+7. RDBのItem Tableの対象物品を削除
+    1. 失敗したらMeilisearchを復元
+8. GraphDBから削除
+    1. 削除対象のノードを削除
+        1. 失敗した場合
+            1. 削除したRDBの情報を再登録することで、復元する <-この際、id情報を取得しておく。
+                1. 失敗したら、critical insidentを返す (501)
+            2. Meiliserachに新しいidの情報に更新した物品情報を再登録
+                1. 失敗したら、critical insidentを返す (501)
+            3. 500を返す
+9. 200を返す (200)
 
 ## Request
 
 ```
 header {Authorization}
 body {}
+```
+
+## Response
+
+```
+header {Authorization}
+body {}
+```
+
+# /api/item/move (PUT)
+
+物品の移動をする
+
+## 外部接続
+
+- GraphDB
+
+## 処理
+
+1. healthcheck
+2. 物品が存在するかのチェック (RDB, GraphDB, Meilisearch)
+3. 新しい親物品が存在するかのチェック (RDB, GraphDB, Meilisearch)
+    1. 更新対象の物品が葉ではないとき
+        1. 親物品が変わっている場合、親物品が更新対象の物品の子孫でないことをチェック
+    1. 更新対象の物品が葉のとき
+        1. skip
+4. 対象物品を移動
+5. 200を返す (200)
+
+## RequestType
+
+```mermaid
+erDiagram
+    MoveItemData {
+        String NewParentVisibleId "新しい親物品ID"
+        String VisibleId "移動する対象の物品ID"
+    }
+```
+
+## Request
+
+```
+header {Authorization}
+body {
+    MoveItemData[]
+}
 ```
 
 ## Response
