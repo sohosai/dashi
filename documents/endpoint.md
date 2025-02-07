@@ -114,7 +114,7 @@ ItemId で指定した物品の情報を取得 (一つだけのはず)
 ## 処理
 
 1. healthcheck
-2. `VisibleId`から Item Table を検索 (RDB) <- このとき、`IsWaste`が`false`であることが条件
+2. `VisibleId`から Item Table を検索 (RDB)
 3. 2.が成功したら、`VisibleId`から Label Table を検索 (RDB)
 4. `Id`(Item Table)で親物品を検索 (GraphDB) <- 親物品の`Id`を取得
 5. `Id` (Item Table)から親物品の`VisibleId`を取得
@@ -230,7 +230,7 @@ body {
 ## 処理
 
 1. healthcheck
-2. `Color`をItem Tableで検索 (RDB) <- このとき`IsWaste`が`false`であることが条件
+2. `Color`をItem Tableで検索 (RDB)
 
 ※ 検索前に色の単語同士を`^`で結合する処理を書くこと
 
@@ -265,7 +265,7 @@ body {
 }
 ```
 
-# /api/item/delete-history/:limit (GET)
+# /api/item/delete-history/{limit} (GET)
 
 削除履歴を返す
 
@@ -338,7 +338,7 @@ body {
    2. VisibleId が Label Table に存在するかのチェック (RDB)
    3. 登録される物品が新規の物品であるかをチェック (RDB, Meiliserach) <- VisibleIdの被りがないかのチェックをする Item Tableを検索
       1. RDBまたは、Meilisearchのどちらかにのみ登録データが存在したら、エラーを返す <-重大なエラー
-   4. 親物品が存在するかのチェック (RDB, GraphDB, Meilisearch) <- このとき`IsWaste`が`false`であることが条件
+   4. 親物品が存在するかのチェック (RDB, GraphDB, Meilisearch)
    5. Colorが空ではない場合は、被りがないかチェック (RDB, Meiliserach)
 3. VisileId で Label Table を検索 (RDB) <- 2.1. で完了している
 
@@ -374,13 +374,13 @@ erDiagram
     RegisterItemData {
         String ParentVisibleId "GraphDBで必要 (validation)"
         String VisibleId FK "Label tableのIdとリレーションを張っている (validation)"
-        String Name "物品名"
+        String Name "物品名 (validation)"
         String ProductNumber "空の文字列を許容 型番"
         String Description "空の文字列を許容 物品の説明"
         Option_i32 PurchaseYear "購入年度"
         Option_i32 PurchasePrice "購入金額"
         Option_i32 Durability "耐用年数"
-        boolean IsDepreciation "減価償却対象かどうか (validation)"
+        boolean IsDepreciation "減価償却対象かどうか"
         Json Connector "端子 e.g. ['USB Type-A', 'HDMI'] (可変な配列)"
         String Color "空の文字列を許容 e.g. 'Red^Orange^Brown' (option_validation)"
     }
@@ -402,7 +402,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/item/update (PUT)
+# /api/item/update/{Id} (PUT)
 
 物品情報の更新をする
 
@@ -416,12 +416,12 @@ body {}
 
 1. healthcheck
 2. validation の実行
-   1. VisibleId が Item Table に存在するかチェック (RDB)
-   2. 物品名が空でないかのチェック
+   1. 物品名が空でないかのチェック (Json)
+   2. Id が Item Table に存在するかチェック (RDB)
    3. VisibleId が Label Table に存在するかのチェック (RDB)
-3. Meilisearch の登録情報の更新
-4. GraphDB の登録情報の更新 <- `updated_at`の更新を忘れない (`created_at`は、固定)
-   1. 更新に失敗したら、MeiliSearch の情報を戻して返す (500)
+   4. Colorが空ではない場合は、被りがないかチェック (RDB, Meiliserach)
+3. RDB の登録情報の更新
+4. Meilisearch の登録情報の更新
 5. 200を返す (200)
 
 ## RequestType
@@ -429,8 +429,9 @@ body {}
 ```mermaid
 erDiagram
     UpdateItemData {
-        String VisibleId FK "Label tableのIdとリレーションを張っている"
-        String Name "物品名"
+        i32 Id PK "物品ID autoincrement"
+        String VisibleId FK "Label tableのIdとリレーションを張っている (validation)"
+        String Name "物品名 (validation)"
         String ProductNumber "空の文字列を許容 型番"
         String Description "空の文字列を許容 物品の説明"
         Option_i32 PurchaseYear "購入年度"
@@ -438,7 +439,7 @@ erDiagram
         Option_i32 Durability "耐用年数"
         boolean IsDepreciation "減価償却対象かどうか"
         Json Connector "端子 e.g. ['USB Type-A', 'HDMI'] (可変な配列)"
-        String Color "空の文字列を許容 e.g. 'Red^Orange^Brown'"
+        String Color "空の文字列を許容 e.g. 'Red^Orange^Brown' (option_validation)"
     }
 
 ```
@@ -459,7 +460,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/item/delete/{VisibleId} (DELETE)
+# /api/item/delete/{Id} (DELETE)
 
 物品の削除をする
 
@@ -474,9 +475,9 @@ body {}
 ## 処理
 
 1. healthcheck
-2. `VisibleId`を検索し、対象の物品が存在することをチェック (RDB, Meilisearch) <- このとき、`Item Table` (RDB) 及び`Item` (Meilisearch) を保持しておく。
-        1. `Id`が1の場合は、除外する
-        2. RDBまたは、Meilisearchのどちらかにのみ登録データが存在したら、エラーを返す <-重大なエラー
+2. `Id`を検索し、対象の物品が存在することをチェック (RDB, Meilisearch) <- このとき、`Item Table` (RDB) 及び`Item` (Meilisearch) を保持しておく。
+    1. `Id`が1の場合は、除外する
+    2. RDBまたは、Meilisearchのどちらかにのみ登録データが存在したら、エラーを返す <-重大なエラー
 3. GraphDBから削除できるかのチェック
     1. 削除対象が葉でない場合
         1. エラーを吐く (400 or 500)
@@ -510,12 +511,13 @@ header {Authorization}
 body {}
 ```
 
-# /api/item/move (PUT)
+# /api/item/transfer (PUT)
 
 物品の移動をする
 
 ## 外部接続
 
+- RDB
 - GraphDB
 
 ## 処理
@@ -534,7 +536,7 @@ body {}
 
 ```mermaid
 erDiagram
-    MoveItemData {
+    TransferItemData {
         String NewParentVisibleId "新しい親物品ID"
         String VisibleId "移動する対象の物品ID"
     }
@@ -545,7 +547,7 @@ erDiagram
 ```
 header {Authorization}
 body {
-    MoveItemData[]
+    transfer_item_data: TransferItemData[]
 }
 ```
 
@@ -655,12 +657,21 @@ header {Authorization}
 body {}
 ```
 
+## ResponseType
+
+```mermaid
+erDiagram
+    GenerateData {
+        Vec_String VisibleIds "e.g. ["0001", "0002", "0003"]"
+    }
+```
+
 ## Response
 
 ```
 header {Authorization}
 body {
-  Label TableのId[]
+  GenerateData
 }
 ```
 
@@ -685,12 +696,21 @@ header {Authorization}
 body {}
 ```
 
+## ResponseType
+
+```mermaid
+erDiagram
+    GenerateData {
+        Vec_String VisibleIds "e.g. ["0001", "0002", "0003"]"
+    }
+```
+
 ## Response
 
 ```
 header {Authorization}
 body {
-  Label TableのId[]
+  GenerateData
 }
 ```
 
@@ -715,12 +735,21 @@ header {Authorization}
 body {}
 ```
 
+## ResponseType
+
+```mermaid
+erDiagram
+    GenerateData {
+        Vec_String VisibleIds "e.g. ["0001", "0002", "0003"]"
+    }
+```
+
 ## Response
 
 ```
 header {Authorization}
 body {
-  Label TableのId[]
+  GenerateData
 }
 ```
 
