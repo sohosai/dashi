@@ -65,12 +65,6 @@ keyword に引っかかる検索結果を取得
 
 ※ 複数`keywords`の場合は、`+`で結合されて来るのでスペースに変換して Meilisearch に突っこむ
 
-参考サイト: https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results
-
-※ 必ず`IsWaste`が`false`でフィルタリング`
-
-参考サイト: https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results
-
 3. SearchItemData 型の配列 を返す (200)
 
 ## Request
@@ -102,7 +96,7 @@ body {
 }
 ```
 
-# /api/item/{VisibleId} (GET)
+# /api/item/{Id} (GET)
 
 ItemId で指定した物品の情報を取得 (一つだけのはず)
 
@@ -114,10 +108,10 @@ ItemId で指定した物品の情報を取得 (一つだけのはず)
 ## 処理
 
 1. healthcheck
-2. `VisibleId`から Item Table を検索 (RDB)
-3. 2.が成功したら、`VisibleId`から Label Table を検索 (RDB)
+2. `Id`から Item Table を検索 (RDB)
+3. 2.が成功したら、`Id`から Label Table を検索 (RDB)
 4. `Id`(Item Table)で親物品を検索 (GraphDB) <- 親物品の`Id`を取得
-5. `Id` (Item Table)から親物品の`VisibleId`を取得
+5. `Id` (Item Table)から親物品の`Id`を取得
 6. EachItemData 型 を返す (200)
 
 ## Request
@@ -219,9 +213,9 @@ body {
 }
 ```
 
-# /api/item/cable/{CableColorPattern (e.g. 'Red^Orange^Brown')} (GET)
+# /api/item/cable/{CableColorPattern/search?keywords={keywords} (e.g. 'Red^Orange^Brown')} (GET)
 
-ケーブルの色で検索された物品を返す (一つだけのはず)
+ケーブルの色で絞り込み検索された対象の検索対象の物品の情報を返す
 
 ## 外部接続
 
@@ -265,7 +259,7 @@ body {
 }
 ```
 
-# /api/item/delete-history/{limit} (GET)
+# /api/item/archive/{limit} (GET)
 
 削除履歴を返す
 
@@ -415,14 +409,15 @@ body {}
 ## 処理
 
 1. healthcheck
-2. validation の実行
+2. 根の物品の削除のブロック
+3. validation の実行
    1. 物品名が空でないかのチェック (Json)
    2. Id が Item Table に存在するかチェック (RDB)
    3. VisibleId が Label Table に存在するかのチェック (RDB)
    4. Colorが空ではない場合は、被りがないかチェック (RDB, Meiliserach)
-3. RDB の登録情報の更新
-4. Meilisearch の登録情報の更新
-5. 200を返す (200)
+4. RDB の登録情報の更新
+5. Meilisearch の登録情報の更新
+6. 200を返す (200)
 
 ## RequestType
 
@@ -475,19 +470,20 @@ body {}
 ## 処理
 
 1. healthcheck
-2. `Id`を検索し、対象の物品が存在することをチェック (RDB, Meilisearch) <- このとき、`Item Table` (RDB) 及び`Item` (Meilisearch) を保持しておく。
+2. 根の物品の削除のブロック
+3. `Id`を検索し、対象の物品が存在することをチェック (RDB, Meilisearch) <- このとき、`Item Table` (RDB) 及び`Item` (Meilisearch) を保持しておく。
     1. `Id`が1の場合は、除外する
     2. RDBまたは、Meilisearchのどちらかにのみ登録データが存在したら、エラーを返す <-重大なエラー
-3. GraphDBから削除できるかのチェック
+4. GraphDBから削除できるかのチェック
     1. 削除対象が葉でない場合
         1. エラーを吐く (400 or 500)
-4. `Id`を検索 (GraphDB)
-5. 貸し出し中物品でないかチェック
+5. `Id`を検索 (GraphDB)
+6. 貸し出し中物品でないかチェック
     1. 貸し出し中だと削除できない (400)
-6. Meilisearchを対象物品を削除
-7. RDBのItem Tableの対象物品を削除
+7. Meilisearchを対象物品を削除
+8. RDBのItem Tableの対象物品を削除
     1. 失敗したらMeilisearchを復元
-8. GraphDBから削除
+9. GraphDBから削除
     1. 削除対象のノードを削除
         1. 失敗した場合
             1. 削除したRDBの情報を再登録することで、復元する <-この際、id情報を取得しておく。
@@ -495,7 +491,7 @@ body {}
             2. Meiliserachに新しいidの情報に更新した物品情報を再登録
                 1. 失敗したら、critical insidentを返す (501)
             3. 500を返す
-9. 200を返す (200)
+10. 200を返す (200)
 
 ## Request
 
