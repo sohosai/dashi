@@ -92,7 +92,7 @@ erDiagram
 ```
 header {Authorization}
 body {
-  SearchItemData[]
+  search_items: SearchItemData[]
 }
 ```
 
@@ -736,7 +736,7 @@ body {}
 ```mermaid
 erDiagram
     GenerateData {
-        Vec_String VisibleIds "e.g. ["0001", "0002", "0003"]"
+        Vec_String VisibleIds "e.g. ['0001', '0002', '0003']"
     }
 ```
 
@@ -760,7 +760,7 @@ body {
 ## 処理
 
 1. healthcheck
-2. Item Tableの`IsDepreciation`の物品を検索 <-このとき、`IsWaste`が`false`であることが条件
+2. Item Tableの`IsDepreciation`の物品を検索
 3. `DepreiationCsvData`の配列を返す
 
 ## Request
@@ -788,7 +788,7 @@ erDiagram
 ```
 header {Authorization}
 body {
-   DepreiationCsvData[]
+   depreciation_items: DepreiationCsvData[]
 }
 ```
 
@@ -803,7 +803,7 @@ body {
 ## 処理
 
 1. healthcheck
-2. Item Tableの`IsWaste`が`false`の物品を検索
+2. Item Tableを全取得
 3. `ItemCsvData`の配列を返す
 
 ## Request
@@ -831,6 +831,6 @@ erDiagram
 ```
 header {Authorization}
 body {
-    ItemCsvData[]
+    items: ItemCsvData[]
 }
 ```
