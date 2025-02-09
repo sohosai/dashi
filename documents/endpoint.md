@@ -1,4 +1,4 @@
-# /api/utils/login (GET)
+# /api/login (GET)
 
 Auth0 の認証 (一旦、basic 認証)
 
@@ -20,7 +20,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/utils/healthcheck (GET)
+# /api/healthcheck (GET)
 
 RDB、GraphDB、Meilisearch のコンテナが稼動しているかのチェック
 
@@ -126,8 +126,9 @@ body {}
 ```mermaid
 erDiagram
     IndivisualData {
-        i32 Id PK "物品ID autoincrement"
-        String VisibleId FK "物品に貼るID (Label Table)"
+        i32 Id "物品ID"
+        String VisibleId "物品に貼るID (Label Table)"
+        String ParentId "物品ID"
         String ParentVisibleId "親物品に貼るID (Label Table)"
         String Record "ActiveEnum {Qr, Barcode, Nothing} (Label Table)"
         boolean IsWaste "廃棄物かどうか"
@@ -170,17 +171,9 @@ body {
 
 ※ 複数`keywords`の場合は、`+`で結合されて来るのでスペースに変換して Meilisearch に突っこむ
 
-参考サイト: https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results
-
-※ `connector``でフィルタリング
+※ `connector`でフィルタリング
 
 参考サイト: https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results
-
-
-※ 必ず`IsWaste`が`false`でフィルタリング`
-
-参考サイト: https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results
-
 
 3. SearchItemData 型の配列を返す (200)
 
@@ -226,7 +219,7 @@ body {
 1. healthcheck
 2. `Color`をItem Tableで検索 (RDB)
 
-※ 検索前に色の単語同士を`^`で結合する処理を書くこと
+※ 検索前に色の単語同士を`^`で結合する処理を書くこと (clientでする)
 
 3. SearchItemData 型 の配列を返す (200)
 
@@ -519,22 +512,19 @@ body {}
 ## 処理
 
 1. healthcheck
-2. 物品が存在するかのチェック (RDB, GraphDB, Meilisearch)
-3. 新しい親物品が存在するかのチェック (RDB, GraphDB, Meilisearch)
-    1. 更新対象の物品が葉ではないとき
-        1. 親物品が変わっている場合、親物品が更新対象の物品の子孫でないことをチェック
-    1. 更新対象の物品が葉のとき
-        1. skip
-4. 対象物品を移動
-5. 200を返す (200)
+2. `Id`の物品が存在するかのチェック (RDB, GraphDB)
+3. `NewParentId`の物品が存在するかのチェック (RDB, GraphDB)
+4. 親物品が対象物品の子孫物品になっていないかのチェック (GraphDB)
+8. 対象物品を移動
+9. 200を返す (200)
 
 ## RequestType
 
 ```mermaid
 erDiagram
     TransferItemData {
-        String NewParentVisibleId "新しい親物品ID"
-        String VisibleId "移動する対象の物品ID"
+        String Id "移動する対象の物品ID"
+        String NewParentId "新しい親物品ID"
     }
 ```
 
@@ -543,7 +533,7 @@ erDiagram
 ```
 header {Authorization}
 body {
-    transfer_item_data: TransferItemData[]
+    TransferItemData、
 }
 ```
 
@@ -554,7 +544,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/rental/rent (POST)
+# /api/rental/rent/{Id} (POST)
 
 物品の貸し出しをする
 
@@ -566,7 +556,7 @@ body {}
 
 1. healthcheck
 2. validationの実行
-   1. 貸し出しの物品が存在するかチェック <-このとき、Item Tableを検索するが、`IsWaste`が`false`が条件
+   1. 貸し出しの物品が存在するかチェック
 3. `ItemId` (Item TableのId)を検索して、Item TableのIdを取得
 4. Rent Tableに貸し出し履歴を追加
 5. Item Tableの`IsRent`をTrueにする
@@ -599,7 +589,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/rental/render/{VisibleId} (PUT)
+# /api/rental/render/{Id} (PUT)
 
 物品の返却をする
 
@@ -611,7 +601,7 @@ body {}
 
 1. healthcheck
 2. validationの実行
-   1. `VisibleId`をItem Tableで検索 <- ここで、`Id`を取得。このとき、`IsWaste`が`false`が条件
+   1. `Id`をItem Tableで検索
       1. `IsRent`が`false`なら、500で返す
    2. `ItemId`(1.で取得した`Id`)をRent Tableで検索
 3. Item Tableの`IsRent`を`false`に変える
@@ -632,7 +622,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/generate/qr/{Number} (POST)
+# /api/generate (POST)
 
 ## 外部接続
 
@@ -643,92 +633,26 @@ Label Table に QR として使用する物品 ID を追加する
 ## 処理
 
 1. healthcheck
-2. Label Tableに`Record`を`QR`指定し、n個生成
-3. `Id`(Label Table)の配列を返す
+2. Label Tableに`Record`を指定し、n個生成
+3. `VisibleId`(Label Table)の配列を返す
 
-## Request
-
-```
-header {Authorization}
-body {}
-```
-
-## ResponseType
+## RequestType
 
 ```mermaid
 erDiagram
-    GenerateData {
-        Vec_String VisibleIds "e.g. ["0001", "0002", "0003"]"
+    GenerateDataRequest {
+        Record Record "ActiveEnum {Qr, Barcode, Nothing}"
+        u32 quantity "生成する数"
     }
 ```
 
-## Response
+## Request
 
 ```
 header {Authorization}
 body {
-  GenerateData
+    GenerateDataRequest,
 }
-```
-
-# /api/generate/barcode/{Number} (POST)
-
-Label Table に barcode として使用する物品 ID を追加する
-
-## 外部接続
-
-- RDB
-
-## 処理
-
-1. healthcheck
-2. Label Tableに`Record`を`Barcode`に指定し、n個生成
-3. `Id`(Label Table)の配列を返す
-
-## Request
-
-```
-header {Authorization}
-body {}
-```
-
-## ResponseType
-
-```mermaid
-erDiagram
-    GenerateData {
-        Vec_String VisibleIds "e.g. ["0001", "0002", "0003"]"
-    }
-```
-
-## Response
-
-```
-header {Authorization}
-body {
-  GenerateData
-}
-```
-
-# /api/generate/nothing/{Number} (POST)
-
-## 外部接続
-
-- RDB
-
-Label Table に 何も▼貼らずに使用する物品 ID を追加する
-
-## 処理
-
-1. healthcheck
-2. Label Tableに`Record`を`Nothing`指定し、n個生成
-3. `Id`(Label Table)の配列を返す
-
-## Request
-
-```
-header {Authorization}
-body {}
 ```
 
 ## ResponseType
@@ -740,12 +664,12 @@ erDiagram
     }
 ```
 
-## Response
+## Request
 
 ```
 header {Authorization}
 body {
-  GenerateData
+    GenerateData,
 }
 ```
 
