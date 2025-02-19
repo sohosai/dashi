@@ -513,7 +513,7 @@ body {}
 
 1. healthcheck
 2. `Id`の物品が存在するかのチェック (RDB, GraphDB)
-3. `NewParentId`の物品が存在するかのチェック (RDB, GraphDB)
+3. `NewParentVisibleId`の物品が存在するかのチェック (RDB, GraphDB) <- idを取得
 4. 親物品が対象物品の子孫物品になっていないかのチェック (GraphDB)
 8. 対象物品を移動
 9. 200を返す (200)
@@ -524,7 +524,7 @@ body {}
 erDiagram
     TransferItemData {
         String Id "移動する対象の物品ID"
-        String NewParentId "新しい親物品ID"
+        String NewParent "新しい親物品に貼るID"
     }
 ```
 

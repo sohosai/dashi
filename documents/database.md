@@ -66,11 +66,11 @@ erDiagram
 
 ```mermaid
 flowchart LR
-    id2((Id of Item Table)) --ItemTree--> id1((Id of Item Table))
-    id3((Id of Item Table)) --ItemTree--> id1((Id of Item Table))
-    id4((Id of Item Table)) --ItemTree--> id1((Id of Item Table))
-    id5((Id of Item Table)) --ItemTree--> id2((Id of Item Table))
-    id6((Id of Item Table)) --ItemTree--> id2((Id of Item Table))
+    id2((Id of Item Table)) --Parent--> id1((Id of Item Table))
+    id3((Id of Item Table)) --Parent--> id1((Id of Item Table))
+    id4((Id of Item Table)) --Parent--> id1((Id of Item Table))
+    id5((Id of Item Table)) --Parent--> id2((Id of Item Table))
+    id6((Id of Item Table)) --Parent--> id2((Id of Item Table))
 ```
 
 # Meiliserach
