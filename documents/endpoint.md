@@ -79,11 +79,21 @@ body {}
 ```mermaid
 erDiagram
     SearchItemData {
+        i32 Id PK "物品ID autoincrement"
         String VisibleId FK "物品に貼るID (Label Table)"
+        String Record "ActiveEnum {Qr, Barcode, Nothing} (Label Table)"
         String Name "物品名"
+        String ProductNumber "空の文字列を許容 型番"
+        String Description "空の文字列を許容 物品の説明"
+        Option_i32 PurchaseYear "購入年度"
+        Option_i32 PurchasePrice "購入金額"
+        Option_i32 Durability "耐用年数"
+        boolean IsDepreciation "減価償却対象かどうか"
         Json Connector "端子 e.g. ['USB Type-A', 'HDMI'] (可変な配列)"
         boolean IsRent "貸出中かどうか"
         String Color "e.g. 'Red^Orange^Brown'"
+        datetime CreatedAt "作成日時"
+        datetime UpdatedAt "更新日時"
     }
 ```
 
@@ -153,102 +163,6 @@ erDiagram
 header {Authorization}
 body {
   MeilisearchItemData
-}
-```
-
-# /api/item/connector/{ConnecrtorName}/search?keywords={keywords} (GET)
-
-コネクタで絞り込み検索された対象の検索対象の物品の情報を返す
-
-## 外部接続
-
-- Meilisearch
-
-## 処理
-
-1. healthcheck
-2. `Connector`の絞り込みをした状態で、`keywords`検索 (Meilisearch)
-
-※ 複数`keywords`の場合は、`+`で結合されて来るのでスペースに変換して Meilisearch に突っこむ
-
-※ `connector`でフィルタリング
-
-参考サイト: https://www.meilisearch.com/docs/learn/filtering_and_sorting/filter_search_results
-
-3. SearchItemData 型の配列を返す (200)
-
-## Request
-
-```
-header {Authorization}
-body {}
-```
-
-## Response Type
-
-```mermaid
-erDiagram
-    SearchItemData {
-        String VisibleId FK "物品に貼るID (Label Table)"
-        String Name "物品名"
-        Json Connector "端子 e.g. ['USB Type-A', 'HDMI'] (可変な配列)"
-        boolean IsRent "貸出中かどうか"
-        String Color "e.g. 'Red^Orange^Brown'"
-    }
-```
-
-## Response
-
-```
-header {Authorization}
-body {
-    SearchItemData[]
-}
-```
-
-# /api/item/cable/{CableColorPattern/search?keywords={keywords} (e.g. 'Red^Orange^Brown')} (GET)
-
-ケーブルの色で絞り込み検索された対象の検索対象の物品の情報を返す
-
-## 外部接続
-
-- RDB
-
-## 処理
-
-1. healthcheck
-2. `Color`をItem Tableで検索 (RDB)
-
-※ 検索前に色の単語同士を`^`で結合する処理を書くこと (clientでする)
-
-3. SearchItemData 型 の配列を返す (200)
-
-## Request
-
-```
-header {Authorization}
-body {}
-```
-
-## Response Type
-
-```mermaid
-erDiagram
-    SearchItemData {
-        String VisibleId FK "物品に貼るID (Label Table)"
-        String Name "物品名"
-        Json Connector "端子 e.g. ['USB Type-A', 'HDMI'] (可変な配列)"
-        boolean IsRent "貸出中かどうか"
-        String Color "e.g. 'Red^Orange^Brown'"
-    }
-```
-
-## Response
-
-```
-header {Authorization}
-body {
-    SearchItemData[]
 }
 ```
 
