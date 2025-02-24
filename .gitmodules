@@ -1,9 +1,0 @@
-[submodule "backend/server"]
-	path = backend/server
-	url = https://github.com/Myxogastria0808/dashi-server.git
-[submodule "client"]
-	path = client
-	url = https://github.com/Myxogastria0808/dashi-client.git
-[submodule "backend/image-server"]
-	path = backend/image-server
-	url = https://github.com/Myxogastria0808/dashi-image-server.git
