@@ -166,7 +166,7 @@ body {
 }
 ```
 
-# /api/item/archive/{limit} (GET)
+# /api/item/trash (GET)
 
 削除履歴を返す
 
@@ -177,7 +177,7 @@ body {
 ## 処理
 
 1. healthcheck
-2. limitの範囲で新しい情報から全取得する
+2. 全取得する
 3. TrashItemData 型 の配列を返す (200)
 
 ## Request
