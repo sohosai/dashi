@@ -58,6 +58,16 @@ erDiagram
         datetime RentAt "貸出日時"
         datetime ReturnAt "返却日時"
     }
+    Connector {
+        String id PK "autoincrement"
+        String name UK "connector名"
+        String status "ActiveEnum {Active, Archive}"
+    }
+    Color {
+        String id PK "autoincrement"
+        String name UK "色名"
+        String status "ActiveEnum {Active, Archive}"
+    }
 ```
 
 # GraphDB (Neo4j)

@@ -414,7 +414,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/item/transfer (PUT)
+# /api/item/transfer (PATCh)
 
 物品の移動をする
 
@@ -474,7 +474,7 @@ body {}
 3. `ItemId` (Item TableのId)を検索して、Item TableのIdを取得
 4. Rent Tableに貸し出し履歴を追加
 5. Item Tableの`IsRent`をTrueにする
-6. 200を返す (200)
+6. 201を返す (201)
 
 ## RequestType
 
@@ -503,7 +503,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/rental/render/{Id} (PUT)
+# /api/rental/render/{Id} (PATCH)
 
 物品の返却をする
 
@@ -534,6 +534,48 @@ body {}
 ```
 header {Authorization}
 body {}
+```
+
+# /api/rental/history/{id} (GET)
+
+## 外部接続
+
+- RDB
+
+## 処理
+
+1. healthcheck
+2. `id`と一致する`ItemId`を全て取得
+6. `RentalItemHistoryData`の配列を返す (200)
+
+## Request
+
+```
+header {Authorization}
+body {}
+```
+
+## Response
+
+```
+header {Authorization}
+body {
+    RentalItemHistoryData[]
+}
+```
+
+## ResponseType
+
+```mermaid
+erDiagram
+    RentalItemHistoryData {
+        i32 Id PK "autoincrement"
+        i32 ItemId FK "Item TableのIdとリレーションを張っている"
+        String Recipient "貸出先"
+        String Description "空の文字列を許容 備考"
+        datetime RentAt "貸出日時"
+        datetime ReturnAt "返却日時"
+    }
 ```
 
 # /api/generate (POST)
