@@ -246,6 +246,13 @@ body {
 (ここでQr or Barcodeの情報を拾う)
 
 5. RDB に物品の登録をする
+
+- Recipient: ""
+- RentalDescription: ""
+- LatestRentAt: None
+- ScheduledReplaceAt: None
+- LatestReplaceAt: None
+
 4. Meilisearch に物品の登録する
    1. 登録に失敗したら、RDB の情報を消して返す (500)
 6. GraphDB に物品のノードを追加
@@ -414,7 +421,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/item/transfer (PATCh)
+# /api/item/transfer (PATCH)
 
 物品の移動をする
 
@@ -458,6 +465,172 @@ header {Authorization}
 body {}
 ```
 
+# /api/connector (POST)
+
+接続端子の登録
+
+## 外部接続
+
+- RDB
+- meilisearch
+
+## 処理
+
+1. healthcheck
+2. cnnector名に被りがないかチェック
+3. connector Tableに追加
+4. Meilisearchに追加
+5. 201を返す (201)
+
+## RequestType
+
+```mermaid
+erDiagram
+    RegisterConnectorData {
+        String name "connector名"
+    }
+```
+
+## Request
+
+```
+header {Authorization}
+body {
+    ConnectorData
+}
+```
+
+## Response
+
+```
+header {Authorization}
+body {}
+```
+
+# /api/connector/{id} (PATCH)
+
+接続端子の`Status`を変更する
+
+## 外部接続
+
+- RDB
+- meilisearch
+
+## 処理
+
+1. healthcheck
+2. connector Table の `status`を更新する
+3. Meilisearch の `status`を更新する
+4. 200を返す (200)
+
+## RequestType
+
+```mermaid
+erDiagram
+    StatusConnectorData {
+        i32 id "connector id"
+        String status "ActiveEnum {Active, Archive}"
+    }
+```
+
+## Request
+
+```
+header {Authorization}
+body {}
+```
+
+## Response
+
+```
+header {Authorization}
+body {}
+```
+
+# /api/connector (GET)
+
+全接続端子を取得
+
+## 外部接続
+
+- RDB
+
+## 処理
+
+1. healthcheck
+6. ConnectorDataの配列を返す (200)
+
+## Request
+
+```空の文字列を許容 
+header {Authorization}
+body {}
+```
+
+## ResponseType
+
+```mermaid
+erDiagram
+    ConnectorData {
+        String id PK "autoincrement"
+        String name UK "connector名"
+        String status "ActiveEnum {Active, Archive}"
+    }
+```
+
+## Response
+
+```
+header {Authorization}
+body {
+    ConnectorData[]
+}
+```
+
+# /api/connector/search?keywords={keywords} (GET)
+
+接続端子を検索
+
+## 外部接続
+
+- meilisearch
+
+## 処理
+
+1. healthcheck
+2. `keywords`を検索 (Meilisearch)
+
+※ 複数`keywords`の場合は、`+`で結合されて来るのでスペースに変換して Meilisearch に突っこむ
+
+3. ConnectorDataの配列を返す (200)
+
+## Request
+
+```
+header {Authorization}
+body {}
+```
+
+## ResponseType
+
+```mermaid
+erDiagram
+    ConnectorData {
+        String id PK "autoincrement"
+        String name UK "connector名"
+        String status "ActiveEnum {Active, Archive}"
+    }
+```
+
+## Response
+
+```
+header {Authorization}
+body {
+    ConnectorData[]
+}
+```
+
 # /api/rental/rent/{Id} (POST)
 
 物品の貸し出しをする
@@ -471,19 +644,26 @@ body {}
 1. healthcheck
 2. validationの実行
    1. 貸し出しの物品が存在するかチェック
+      1. なければ400で返す
+   2. `IsRent`が`false`であるかチェック
+      1. `IsRent`が`true`なら、500で返す
+   3. `Recipient`が空でないことをチェック
+      1. `Recipient`が`なら、400で返す
 3. `ItemId` (Item TableのId)を検索して、Item TableのIdを取得
-4. Rent Tableに貸し出し履歴を追加
-5. Item Tableの`IsRent`をTrueにする
-6. 201を返す (201)
+4. Item Tableの`IsRent`を`true`にする
+5. `RentItemData`をItem tableに突っこむ
+6. `LatestRentAt`を更新
+7. `LatestReplaceAt`を`None`に更新 
+8. 200を返す (200)
 
 ## RequestType
 
 ```mermaid
 erDiagram
     RentItemData {
-        i32 ItemId FK "Item TableのIdとリレーションを張っている"
         String Recipient "貸出先"
-        String Description "空の文字列を許容 備考"
+        String RentalDescription "空の文字列を許容 備考"
+        Option_datetime ScheduledReplaceAt "Nullを許容 最終返却予定日時"
     }
 ```
 
@@ -503,7 +683,54 @@ header {Authorization}
 body {}
 ```
 
-# /api/rental/render/{Id} (PATCH)
+# /api/rental/update/{Id} (POST)
+
+物品の貸し出し情報の更新をする
+
+## 外部接続
+
+- RDB
+
+## 処理
+
+1. healthcheck
+2. validationの実行
+   1. 貸し出しの物品が存在するかチェック
+      1. なければ400で返す
+   2. `IsRent`が`true`であるかチェック
+      1. `IsRent`が`false`なら、500で返す
+3. `ItemId` (Item TableのId)を検索して、Item TableのIdを取得
+5. `RentItemData`をItem tableに突っこむ
+8. 200を返す (200)
+
+## RequestType
+
+```mermaid
+erDiagram
+    RentItemData {
+        String Recipient "空の文字列を許容 貸出先"
+        String RentalDescription "空の文字列を許容 備考"
+        Option_datetime ScheduledReplaceAt "Nullを許容 最終返却予定日時"
+    }
+```
+
+## Request
+
+```
+header {Authorization}
+body {
+    RentItemData
+}
+```
+
+## Response
+
+```
+header {Authorization}
+body {}
+```
+
+# /api/rental/replace/{Id} (PATCH)
 
 物品の返却をする
 
@@ -517,10 +744,12 @@ body {}
 2. validationの実行
    1. `Id`をItem Tableで検索
       1. `IsRent`が`false`なら、500で返す
-   2. `ItemId`(1.で取得した`Id`)をRent Tableで検索
-3. Item Tableの`IsRent`を`false`に変える
-4. Rent Tableの`UpdatedAt`を更新
-5. 200を返す
+3. `IsRent`を`false`に更新
+4. `Recipient`を空の文字列にする
+5. `RentalDescription`を空の文字列にする
+6. `ScheduledReplaceAt`を空の文字列にする
+7. `LatestReplaceAt`に現在の時刻を突っこむ
+8. 200を返す
 
 ## Request
 
@@ -534,48 +763,6 @@ body {}
 ```
 header {Authorization}
 body {}
-```
-
-# /api/rental/history/{id} (GET)
-
-## 外部接続
-
-- RDB
-
-## 処理
-
-1. healthcheck
-2. `id`と一致する`ItemId`を全て取得
-6. `RentalItemHistoryData`の配列を返す (200)
-
-## Request
-
-```
-header {Authorization}
-body {}
-```
-
-## Response
-
-```
-header {Authorization}
-body {
-    RentalItemHistoryData[]
-}
-```
-
-## ResponseType
-
-```mermaid
-erDiagram
-    RentalItemHistoryData {
-        i32 Id PK "autoincrement"
-        i32 ItemId FK "Item TableのIdとリレーションを張っている"
-        String Recipient "貸出先"
-        String Description "空の文字列を許容 備考"
-        datetime RentAt "貸出日時"
-        datetime ReturnAt "返却日時"
-    }
 ```
 
 # /api/generate (POST)

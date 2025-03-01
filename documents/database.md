@@ -5,11 +5,9 @@ Table 同士の親と子の関係は以下の通り
 | 親          | 子         |
 | ----------- | ---------- |
 | Lable Table | Item Table |
-| Item Table  | Rent Table |
 
 ```mermaid
 erDiagram
-    Item ||--o{ Rental : "Id<->ItemId"
     Trash |o--|{ Label : "VisibleId<->VisibleId"
     Item |o--|| Label : "VisibleId<->VisibleId"
     Item {
@@ -44,19 +42,16 @@ erDiagram
         String Color "空の文字列を許容 e.g. 'Red^Orange^Brown'"
         datetime CreatedAt "作成日時"
         datetime UpdatedAt "更新日時"
+        String Recipient "空の文字列を許容 貸出先"
+        String RentalDescription "空の文字列を許容 備考"
+        Option_datetime LatestRentAt "最終貸出日時"
+        Option_datetime ScheduledReplaceAt "最終返却予定日時"
+        Option_datetime LatestReplaceAt "最終返却日時"
     }
     Label {
         String VisibleId PK, FK "36進数のincrement"
         boolean IsMax "最新(最大)の記録のみtrue, それ以外はfalse"
         String Record "ActiveEnum {Qr, Barcode, Nothing}"
-    }
-    Rental {
-        i32 Id PK "autoincrement"
-        i32 ItemId FK "Item TableのIdとリレーションを張っている"
-        String Recipient "貸出先"
-        String Description "空の文字列を許容 備考"
-        datetime RentAt "貸出日時"
-        datetime ReturnAt "返却日時"
     }
     Connector {
         String id PK "autoincrement"
@@ -105,6 +100,16 @@ erDiagram
         String Color "e.g. 'Red^Orange^Brown'"
         datetime CreatedAt "作成日時"
         datetime UpdatedAt "更新日時"
+    }
+    Connector {
+        String id PK "autoincrement"
+        String name UK "connector名"
+        String status "ActiveEnum {Active, Archive}"
+    }
+    Color {
+        String id PK "autoincrement"
+        String name UK "色名"
+        String status "ActiveEnum {Active, Archive}"
     }
 ```
 
