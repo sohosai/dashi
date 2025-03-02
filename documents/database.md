@@ -61,6 +61,7 @@ erDiagram
     Color {
         String id PK "autoincrement"
         String name UK "色名"
+        String hex UK "HEX Color Code"
         String status "ActiveEnum {Active, Archive}"
     }
 ```
