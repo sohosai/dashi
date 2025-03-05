@@ -638,29 +638,31 @@ body {
 ## 外部接続
 
 - RDB
+- meilisearch
 
 ## 処理
 
 1. healthcheck
 2. validationの実行
-   1. 貸し出しの物品が存在するかチェック
-      1. なければ400で返す
-   2. `IsRent`が`false`であるかチェック
-      1. `IsRent`が`true`なら、500で返す
-   3. `Recipient`が空でないことをチェック
+   1. `Recipient`が空でないことをチェック (Json)
       1. `Recipient`が`なら、400で返す
-3. `ItemId` (Item TableのId)を検索して、Item TableのIdを取得
-4. Item Tableの`IsRent`を`true`にする
-5. `RentItemData`をItem tableに突っこむ
-6. `LatestRentAt`を更新
-7. `LatestReplaceAt`を`None`に更新 
-8. 200を返す (200)
+   2. 貸し出しの物品が存在するかチェック (RDB, MeiliSearch)
+      1. なければ400で返す
+   3. `IsRent`が`false`であるかチェック (RDB, MeiliSearch)
+      1. `IsRent`が`true`なら、500で返す
+4. Meilisearchの`IsRent`を`true`にする
+5. Item Tableの`IsRent`を`true`にする
+6. `RentItemData`をItem tableに突っこむ
+7. `LatestRentAt`を更新
+8. `LatestReplaceAt`を`None`に更新 
+9. 200を返す (200)
 
 ## RequestType
 
 ```mermaid
 erDiagram
     RentItemData {
+        i32 id "autoincrement"
         String Recipient "貸出先"
         String RentalDescription "空の文字列を許容 備考"
         Option_datetime ScheduledReplaceAt "Nullを許容 最終返却予定日時"
@@ -683,7 +685,7 @@ header {Authorization}
 body {}
 ```
 
-# /api/rental/update/{Id} (POST)
+# /api/rental/update/{Id} (PUT)
 
 物品の貸し出し情報の更新をする
 
@@ -708,6 +710,7 @@ body {}
 ```mermaid
 erDiagram
     RentItemData {
+        i32 id "autoincrement"
         String Recipient "空の文字列を許容 貸出先"
         String RentalDescription "空の文字列を許容 備考"
         Option_datetime ScheduledReplaceAt "Nullを許容 最終返却予定日時"
@@ -737,19 +740,21 @@ body {}
 ## 外部接続
 
 - RDB
+- MeiliSearch
 
 ## 処理
 
 1. healthcheck
 2. validationの実行
-   1. `Id`をItem Tableで検索
+   1. `Id`をItem Tableで検索 (RDB)
       1. `IsRent`が`false`なら、500で返す
-3. `IsRent`を`false`に更新
-4. `Recipient`を空の文字列にする
-5. `RentalDescription`を空の文字列にする
-6. `ScheduledReplaceAt`を空の文字列にする
-7. `LatestReplaceAt`に現在の時刻を突っこむ
-8. 200を返す
+3. ItemTableの`IsRent`を`false`に更新 (RDB)
+4. Meilisearchの`IsRent`を`true`にする
+5. `Recipient`を空の文字列にする
+6. `RentalDescription`を空の文字列にする
+7. `ScheduledReplaceAt`を空の文字列にする
+8. `LatestReplaceAt`に現在の時刻を突っこむ
+9. 200を返す
 
 ## Request
 
